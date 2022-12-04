@@ -56,9 +56,9 @@ impl RangePair {
 
 fn read_input() -> Vec<RangePair> {
     fs::read_to_string("inputs/day4.txt")
-        .expect("error reading file")
+        .expect("file should exist")
         .split("\n")
-        .map(|line| RangePair::from_str(line))
+        .map(RangePair::from_str)
         .collect()
 }
 

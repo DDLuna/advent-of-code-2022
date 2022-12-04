@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs, hash::Hash};
+use std::{collections::HashSet, fs};
 
 fn main() {
     let mut priority_sum = 0;
