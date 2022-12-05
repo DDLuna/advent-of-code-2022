@@ -1,22 +1,39 @@
 use std::{fs, str::SplitWhitespace};
 
+struct Move {
+    amount: usize,
+    from: usize,
+    to: usize,
+}
+
+impl Move {
+    fn from_str(text: &str) -> Move {
+        fn next(it: &mut SplitWhitespace) -> usize {
+            it.nth(1)
+                .expect("should be Some")
+                .parse()
+                .expect("should be int")
+        }
+        let mut it = text.split_whitespace();
+        let amount = next(&mut it);
+        let from = next(&mut it) - 1;
+        let to: usize = next(&mut it) - 1;
+        Move { amount, from, to }
+    }
+}
+
 fn main() {
     let (mut stacks, moves) = read_input();
     let mut stacks_2 = stacks.clone();
     for mov in moves {
-        let mut it = mov.split_whitespace();
-        let count = parse_next(&mut it);
-        let from = parse_next(&mut it) - 1;
-        let to = parse_next(&mut it) - 1;
-
-        for _ in 0..count {
-            let from_crate = &stacks[from].pop().expect("should not be empty");
-            stacks[to].push(*from_crate);
+        for _ in 0..mov.amount {
+            let from_crate = &stacks[mov.from].pop().expect("should not be empty");
+            stacks[mov.to].push(*from_crate);
         }
 
-        let from_stack = &mut stacks_2[from];
-        let mut crates: Vec<_> = from_stack.drain(from_stack.len() - count..).collect();
-        stacks_2[to].append(&mut crates);
+        let from_stack = &mut stacks_2[mov.from];
+        let mut crates: Vec<_> = from_stack.drain(from_stack.len() - mov.amount..).collect();
+        stacks_2[mov.to].append(&mut crates);
     }
     let part_1 = get_tops(stacks);
     let part_2 = get_tops(stacks_2);
@@ -32,14 +49,7 @@ fn get_tops(stacks: Vec<Vec<char>>) -> String {
     tops.iter().collect()
 }
 
-fn parse_next(it: &mut SplitWhitespace) -> usize {
-    it.nth(1)
-        .expect("should have number")
-        .parse()
-        .expect("should be int")
-}
-
-fn read_input() -> (Vec<Vec<char>>, Vec<String>) {
+fn read_input() -> (Vec<Vec<char>>, Vec<Move>) {
     let binding = fs::read_to_string("inputs/day5.txt").expect("file should exist");
     let mut file = binding.split("\n\n");
     let initial_state = file.next().expect("should contain initial state");
@@ -47,7 +57,7 @@ fn read_input() -> (Vec<Vec<char>>, Vec<String>) {
         .next()
         .expect("should contain moves")
         .split("\n")
-        .map(str::to_string)
+        .map(Move::from_str)
         .collect();
     (load_inital_state(initial_state), moves)
 }
@@ -70,7 +80,7 @@ fn load_inital_state(initial_state: &str) -> Vec<Vec<char>> {
         iter.next();
         for i in 0..number_of_stacks {
             let element = iter.next().expect("should be element or empty");
-            if !element.is_whitespace() {
+            if element.is_alphabetic() {
                 stacks[i].push(element);
             }
             iter.nth(2);
