@@ -66,19 +66,16 @@ fn load_inital_state(initial_state: &str) -> Vec<Vec<char>> {
     let split = initial_state.split("\n").collect::<Vec<_>>();
     let mut lines = split.iter().rev();
 
-    let number_of_stacks = lines
+    let stack_count = lines
         .next()
         .expect("should contain number of stacks")
         .split_whitespace()
         .count();
-    let mut stacks = Vec::new();
-    for _ in 0..number_of_stacks {
-        stacks.push(Vec::new());
-    }
+    let mut stacks = vec![Vec::new(); stack_count];
     while let Some(line) = lines.next() {
         let mut iter = line.chars();
         iter.next();
-        for i in 0..number_of_stacks {
+        for i in 0..stack_count {
             let element = iter.next().expect("should be element or empty");
             if element.is_alphabetic() {
                 stacks[i].push(element);
