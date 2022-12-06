@@ -6,14 +6,14 @@ fn main() {
     println!("Part 2: {}", get_start_of_message(&input, 14));
 }
 
-fn get_start_of_message(signal: &String, unique_chars: usize) -> usize {
+fn get_start_of_message(signal: &String, unique_chars: u8) -> usize {
     let mut packet_start = VecDeque::new();
     for (i, character) in signal.chars().enumerate() {
         if packet_start.contains(&character) {
             while character != packet_start.pop_front().unwrap() {}
         }
         packet_start.push_back(character);
-        if packet_start.len() == unique_chars {
+        if packet_start.len() == unique_chars as usize {
             return i + 1;
         }
     }
