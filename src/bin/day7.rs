@@ -1,19 +1,22 @@
 use std::{cell::RefCell, collections::HashMap, fs, rc::Rc};
 
 struct Dir {
+    name: String,
     dirs: HashMap<String, Rc<RefCell<Dir>>>,
     files: HashMap<String, u32>,
     parent: Option<Rc<RefCell<Dir>>>,
 }
 
 impl Dir {
-    fn new(parent: Option<Rc<RefCell<Dir>>>) -> Dir {
+    fn new(name: String, parent: Option<Rc<RefCell<Dir>>>) -> Dir {
         Dir {
+            name,
             dirs: HashMap::new(),
             files: HashMap::new(),
             parent,
         }
     }
+
     fn dir_size(&self) -> u32 {
         self.files.values().sum::<u32>()
             + self
@@ -21,6 +24,21 @@ impl Dir {
                 .values()
                 .map(|v| v.borrow().dir_size())
                 .sum::<u32>()
+    }
+
+    fn print_dir(&self) {
+        self.print_rec(0);
+    }
+
+    fn print_rec(&self, level: usize) {
+        println!("{}{}", "  ".repeat(level), self.name);
+        self.dirs
+            .values()
+            .for_each(|dir| dir.borrow().print_rec(level + 1));
+
+        self.files
+            .iter()
+            .for_each(|(file, size)| println!("{}{} {}", "  ".repeat(level), file, size));
     }
 }
 
@@ -34,7 +52,7 @@ fn main() {
     let space_needed = 30_000_000 - space_available;
     let mut smallest_to_delete = total_space;
 
-    let mut dirs = vec![root];
+    let mut dirs = vec![Rc::clone(&root)];
     while !dirs.is_empty() {
         let current = dirs.pop().unwrap();
         let size = current.borrow().dir_size();
@@ -48,10 +66,11 @@ fn main() {
     }
     println!("Part 1: {}", total);
     println!("Part 2: {}", smallest_to_delete);
+    root.borrow().print_dir();
 }
 
 fn parse_input(input: String) -> Rc<RefCell<Dir>> {
-    let root = Rc::new(RefCell::new(Dir::new(None)));
+    let root = Rc::new(RefCell::new(Dir::new("/".to_string(), None)));
     let mut lines = input.split("\n").peekable();
     let mut current_dir = Rc::clone(&root);
     while let Some(line) = lines.next() {
@@ -74,10 +93,13 @@ fn parse_input(input: String) -> Rc<RefCell<Dir>> {
                     let mut parts = line.split_whitespace();
                     match parts.next().unwrap() {
                         "dir" => {
-                            let name = parts.next().unwrap();
+                            let name = parts.next().unwrap().to_string();
                             current_dir.borrow_mut().dirs.insert(
-                                name.to_string(),
-                                Rc::new(RefCell::new(Dir::new(Some(Rc::clone(&current_dir))))),
+                                name.clone(),
+                                Rc::new(RefCell::new(Dir::new(
+                                    name,
+                                    Some(Rc::clone(&current_dir)),
+                                ))),
                             );
                         }
                         number => {
