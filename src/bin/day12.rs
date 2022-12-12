@@ -1,7 +1,12 @@
 use std::{
     collections::{HashSet, VecDeque},
     fs,
+    io::{self, Write},
+    thread,
+    time::Duration,
 };
+
+use termion::{clear, color, cursor};
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
 struct Point(usize, usize);
@@ -9,9 +14,8 @@ struct Point(usize, usize);
 fn main() {
     let (grid, start, end) = read_input();
     let result = bfs(&grid, start, end, false);
-    println!("Part 1: {}", result);
-
     let result_2 = bfs(&grid, end, start, true);
+    println!("Part 1: {}", result);
     println!("Part 2: {}", result_2);
 }
 
@@ -20,8 +24,10 @@ fn bfs(grid: &Vec<Vec<u8>>, start: Point, end: Point, part_2: bool) -> u32 {
     let mut step = 0;
     let mut q = VecDeque::new();
     q.push_back(start);
+    draw(&grid, &visited, &q);
     while !q.is_empty() {
         let size = q.len();
+        let prev = q.clone();
         for _ in 0..size {
             let curr = q.pop_front().unwrap();
             if visited.contains(&curr) {
@@ -66,9 +72,58 @@ fn bfs(grid: &Vec<Vec<u8>>, start: Point, end: Point, part_2: bool) -> u32 {
                 q.push_back(p);
             }
         }
+        update(&grid, &prev, &q);
         step += 1;
     }
     panic!("No path found");
+}
+
+const DRAW_SPEED_MS: u64 = 200;
+
+fn draw(grid: &Vec<Vec<u8>>, visited: &HashSet<Point>, next: &VecDeque<Point>) {
+    let grid: Vec<Vec<char>> = grid
+        .iter()
+        .map(|row| row.iter().map(|n| *n as char).collect())
+        .collect();
+
+    print!("{}{}", cursor::Goto(1, 1), clear::All);
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            let point = Point(i, j);
+            if visited.contains(&point) {
+                print!("{}{}", color::Fg(color::Green), cell);
+            } else if next.contains(&point) {
+                print!("{}{}", color::Fg(color::Yellow), cell);
+            } else {
+                print!("{}{}", color::Fg(color::White), cell)
+            };
+        }
+        println!();
+    }
+    thread::sleep(Duration::from_millis(DRAW_SPEED_MS));
+}
+
+fn update(grid: &Vec<Vec<u8>>, prev: &VecDeque<Point>, next: &VecDeque<Point>) {
+    for point in prev {
+        print!(
+            "{}{}{}{}",
+            cursor::Goto(point.1 as u16 + 1, point.0 as u16 + 1),
+            cursor::Hide,
+            color::Fg(color::Green),
+            grid[point.0][point.1] as char
+        );
+    }
+    for point in next {
+        print!(
+            "{}{}{}{}",
+            cursor::Goto(point.1 as u16 + 1, point.0 as u16 + 1),
+            cursor::Hide,
+            color::Fg(color::Yellow),
+            grid[point.0][point.1] as char
+        );
+    }
+    io::stdout().flush().unwrap();
+    thread::sleep(Duration::from_millis(DRAW_SPEED_MS));
 }
 
 fn valid_height_diff(grid: &Vec<Vec<u8>>, a: Point, b: Point, part_2: bool) -> bool {
