@@ -78,7 +78,7 @@ fn bfs(grid: &Vec<Vec<u8>>, start: Point, end: Point, part_2: bool) -> u32 {
     panic!("No path found");
 }
 
-const DRAW_SPEED_MS: u64 = 200;
+const DRAW_SPEED_MS: u64 = 50;
 
 fn draw(grid: &Vec<Vec<u8>>, visited: &HashSet<Point>, next: &VecDeque<Point>) {
     let grid: Vec<Vec<char>> = grid
